@@ -1,0 +1,1451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Siddhi Desai | Product & Brand Designer — V3</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700;9..144,900&display=swap" rel="stylesheet">
+<style>
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: #0A0A0A; color: #F5F5F5; font-family: Inter, sans-serif; }
+  ::selection { background: #C4B5FD; color: #000; }
+
+  /* Visible keyboard focus everywhere — accessibility fix */
+  a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+    outline: 2px solid #C4B5FD;
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+
+  .skip-link {
+    position: fixed;
+    top: -100px;
+    left: 1rem;
+    z-index: 200;
+    background: #fff;
+    color: #000;
+    padding: 0.75rem 1.25rem;
+    border-radius: 9999px;
+    font-weight: 700;
+    transition: top 200ms ease;
+  }
+  .skip-link:focus { top: 1rem; }
+
+  .display-type {
+    font-family: 'Fraunces', Georgia, serif;
+    font-optical-sizing: auto;
+    letter-spacing: -0.01em;
+  }
+
+  .studio-type {
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    letter-spacing: -0.035em;
+  }
+
+  .scene { position: relative; isolation: isolate; }
+  .scene::before {
+    content: "";
+    position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background:
+      radial-gradient(circle at 20% 10%, rgba(124, 92, 255, 0.12), transparent 34%),
+      radial-gradient(circle at 80% 20%, rgba(91, 140, 255, 0.1), transparent 32%),
+      linear-gradient(180deg, rgba(255,255,255,0.03), transparent 28%, rgba(255,255,255,0.02));
+  }
+
+  .ambient-mesh {
+    background:
+      radial-gradient(circle at var(--cursor-x) var(--cursor-y), rgba(192,132,252,0.18), transparent 22rem),
+      radial-gradient(circle at 20% 20%, rgba(124,92,255,0.2), transparent 28rem),
+      radial-gradient(circle at 72% 36%, rgba(91,140,255,0.16), transparent 30rem),
+      radial-gradient(circle at 45% 88%, rgba(168,85,247,0.12), transparent 24rem);
+    /* Was: filter: hue-rotate(...) — filter animation forces a repaint of the whole
+       blurred layer every frame. Opacity + transform are compositor-only, same visual
+       drift, far cheaper. */
+    animation: ambientShift 18s ease-in-out infinite alternate;
+    will-change: transform, opacity;
+  }
+  .ambient-mesh.is-paused { animation-play-state: paused; }
+  @media (max-width: 640px) {
+    .ambient-mesh { animation: none; }
+  }
+
+  .noise-layer {
+    background-image:
+      radial-gradient(circle at 25% 20%, rgba(255,255,255,0.08) 0 1px, transparent 1px),
+      radial-gradient(circle at 65% 70%, rgba(255,255,255,0.05) 0 1px, transparent 1px);
+    background-size: 18px 18px, 23px 23px;
+    opacity: 0.17;
+    mix-blend-mode: screen;
+  }
+
+  .cursor-glow {
+    left: var(--cursor-x); top: var(--cursor-y);
+    width: var(--cursor-size); height: var(--cursor-size);
+    transform: translate(-50%, -50%);
+    transition: width 220ms ease, height 220ms ease, opacity 220ms ease;
+  }
+
+  .intro-screen { animation: introExit 3.2s ease forwards; }
+  .intro-line { transform-origin: left; animation: introLine 2.1s cubic-bezier(.16,1,.3,1) forwards; }
+
+  /* Scroll-triggered reveal (replaces load-once animation) */
+  .reveal {
+    opacity: 0;
+    transform: translateY(28px);
+    filter: blur(10px);
+    transition: opacity 900ms cubic-bezier(.16,1,.3,1), transform 900ms cubic-bezier(.16,1,.3,1), filter 900ms cubic-bezier(.16,1,.3,1);
+  }
+  .reveal.is-visible { opacity: 1; transform: translateY(0); filter: blur(0); }
+  .reveal-delay-1.is-visible { transition-delay: 90ms; }
+  .reveal-delay-2.is-visible { transition-delay: 180ms; }
+  .reveal-delay-3.is-visible { transition-delay: 270ms; }
+
+  /* Quiet default — used on nav links, gallery tiles, secondary cards. No transform claim it doesn't keep. */
+  .magnetic { transition: color 250ms ease, border-color 250ms ease, background 250ms ease; }
+
+  /* Real magnetism — was previously just a CSS hover lift with a misleading class name.
+     Now driven by actual pointer offset in JS (see MagneticButton). Reserved for the
+     handful of true primary actions, per the audit's "reserve emphasis" finding. */
+  .magnetic-primary {
+    transition: transform 220ms var(--ease-house), box-shadow 300ms ease;
+    will-change: transform;
+  }
+  .magnetic-primary:focus-visible { transform: translateY(-2px); }
+  .magnetic-primary:hover { box-shadow: 0 24px 80px rgba(124,92,255,0.28); }
+
+  .cinematic-card { box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 24px 90px rgba(0,0,0,0.28); }
+
+  /* House easing curve — one value, used everywhere motion responds to the user,
+     so nothing feels like a different hand designed it. */
+  :root { --ease-house: cubic-bezier(.16,1,.3,1); }
+
+  .project-card .project-visual { transition: transform 600ms var(--ease-house), filter 600ms ease; }
+  .project-card:hover .project-visual,
+  .project-card:focus-within .project-visual { transform: translateY(-8px) rotate(-1.5deg) scale(1.05); filter: saturate(1.15); }
+
+  .gallery-tile { transition: transform 450ms var(--ease-house), border-color 300ms ease, background 300ms ease; }
+  .gallery-tile:hover,
+  .gallery-tile:focus-visible { transform: translateY(-6px) scale(1.012); border-color: rgba(192,132,252,0.45); }
+
+  /* Touch targets: anything interactive gets a real 44px minimum hit area on touch devices. */
+  @media (pointer: coarse) {
+    .gallery-tile, .magnetic, .magnetic-primary, nav a, nav button {
+      min-height: 44px;
+    }
+  }
+
+  .progress-bar {
+    position: fixed; top: 0; left: 0; height: 2px;
+    background: linear-gradient(90deg, #c084fc, #ffffff, #60a5fa);
+    z-index: 90; transition: width 80ms linear;
+  }
+
+  /* Cursor now speaks — was a glow with no meaning, per audit #9 */
+  .cursor-label {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #fff;
+    opacity: 0;
+    transition: opacity 180ms ease;
+    white-space: nowrap;
+  }
+  .cursor-label.is-active { opacity: 1; }
+
+  /* Line-mask hero reveal — replaces the block fade with the mask-lift originally specified */
+  .mask-line { overflow: hidden; display: block; }
+  .mask-line > span {
+    display: inline-block;
+    transform: translateY(105%);
+    animation: maskLineUp 900ms cubic-bezier(.16,1,.3,1) forwards;
+  }
+  @keyframes maskLineUp { to { transform: translateY(0); } }
+
+  @keyframes ambientShift {
+    0% { opacity: 0.92; transform: scale(1) translate3d(0,0,0); }
+    100% { opacity: 1; transform: scale(1.04) translate3d(0,0,0); }
+  }
+  @keyframes introLine { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  @keyframes introExit { 0%, 72% { opacity: 1; visibility: visible; } 100% { opacity: 0; visibility: hidden; } }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation: none !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+    .reveal { opacity: 1 !important; transform: none !important; filter: none !important; }
+  }
+</style>
+</head>
+<body>
+<a href="#main" class="skip-link">Skip to content</a>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+/* ---------- Data (kept from V1, fixed extensions, unchanged facts) ---------- */
+
+const navItems = [
+  { label: 'Home', target: 'home' },
+  { label: 'About', target: 'about' },
+  { label: 'Selected Work', target: 'projects' },
+  { label: 'Creative Systems', target: 'services' },
+  { label: 'Visual Archive', target: 'gallery' },
+  { label: 'Experience', target: 'experience' },
+  { label: 'Highlights', target: 'achievements' },
+  { label: 'Contact', target: 'contact' },
+];
+
+const trustExpertise = [
+  'Brand Identity', 'UI/UX Systems', 'Social Media Ecosystems',
+  'Creative Direction', 'Digital Storytelling', 'Startup Branding',
+];
+
+const workedOn = [
+  'SkyD Factory', 'The Aylune', 'Sparadha Bharat', 'Aarohanum',
+  'Wellness Brands', 'Creative Startups', 'Businesses Across Kolhapur',
+];
+
+const highlights = [
+  { title: 'Emotion-Led Branding', desc: 'Building visual identities that create emotional connection and brand recall.' },
+  { title: 'Aesthetic UI/UX', desc: 'Designing immersive interfaces focused on clarity, interaction, and modern digital behavior.' },
+  { title: 'Social Media Ecosystems', desc: 'Transforming Instagram pages into visually consistent brand experiences.' },
+  { title: 'Founder Mindset', desc: 'Approaching every project with strategy, scalability, and long-term brand thinking.' },
+];
+
+const services = [
+  {
+    title: 'Brand Identity Design',
+    desc: 'Building complete visual ecosystems — not just logos.',
+    includes: ['Logo Design', 'Typography Systems', 'Brand Strategy', 'Moodboards', 'Packaging Direction', 'Brand Guidelines'],
+    noteTitle: 'Best For',
+    note: 'Startups, personal brands, premium businesses, fashion, wellness, and creative ventures.',
+  },
+  {
+    title: 'Social Media Strategy & Management',
+    desc: 'Turning social media into a visually consistent and strategically designed brand presence.',
+    includes: ['Feed Design', 'Reels Direction', 'Aesthetic Planning', 'Content Systems', 'Storytelling Strategy', 'Grid Curation'],
+    noteTitle: 'Goal',
+    note: 'Build pages people instantly trust visually.',
+  },
+  {
+    title: 'UI/UX & Website Design',
+    desc: 'Minimal, immersive, responsive interfaces designed with modern interaction psychology.',
+    includes: ['Portfolio Websites', 'Landing Pages', 'Dashboard Interfaces', 'Responsive Systems', 'Mobile-first Experiences', 'UX Wireframes'],
+    noteTitle: 'Design Style',
+    note: 'Editorial, luxury, modern, cinematic, and immersive.',
+  },
+  {
+    title: 'Creative Direction',
+    desc: 'Helping brands communicate visually with clarity, depth, and identity.',
+    includes: ['Visual Storytelling', 'Campaign Concepts', 'Aesthetic Consultation', 'Art Direction', 'Creative Planning', 'Brand Positioning'],
+    noteTitle: 'Focus',
+    note: 'Create a clear visual language that makes the brand feel intentional everywhere.',
+  },
+];
+
+/* Link schema supports every platform type the brief asked for (live, instagram, behance,
+   github, figma, prototype, presentation, pdf, research) — but only real, verified links are
+   filled in. Fields left null simply don't render a link chip. Nothing here is a placeholder
+   pretending to be real; when you have a Behance/Figma/case-study-PDF link, add it here and
+   it appears automatically. */
+const projects = [
+  {
+    title: 'SkyD Factory',
+    role: 'Founder — Creative Strategist — Brand Director',
+    desc: 'A creative studio identity focused on branding, UI/UX, digital aesthetics, and startup storytelling.',
+    scope: ['Brand Identity', 'Social Media', 'UI/UX', 'Creative Direction'],
+    links: { instagram: 'https://www.instagram.com/skydfactory', website: null, behance: null, github: null, figma: null, prototype: null, presentation: null, pdf: null, research: null },
+    logo: './assets/archive/skyd-factory-logo-card.png',
+    caseStudy: emptyCaseStudy,
+  },
+  {
+    title: 'The Aylune',
+    role: 'Branding — Aesthetic Direction — Social Identity',
+    desc: 'A feminine visual storytelling project focused on emotional aesthetics and immersive social branding.',
+    scope: ['Brand Strategy', 'Feed Design', 'Content Direction', 'Social Identity'],
+    links: { instagram: 'https://www.instagram.com/theaylune', website: null, behance: null, github: null, figma: null, prototype: null, presentation: null, pdf: null, research: null },
+    logo: './assets/archive/aylune-social-identity.jpg',
+    caseStudy: emptyCaseStudy,
+  },
+  {
+    title: 'Sparadha Bharat',
+    role: 'UI/UX — Frontend Visual Direction — Branding Ecosystem',
+    desc: 'Worked on frontend visual systems, social identity aesthetics, and digital branding consistency.',
+    scope: ['Website Visual Direction', 'UI Systems', 'Branding', 'Social Media Identity'],
+    links: { website: 'https://www.sparadha.org/', instagram: null, behance: null, github: null, figma: null, prototype: null, presentation: null, pdf: null, research: null },
+    logo: './assets/archive/sparadha-website-launch.png',
+    caseStudy: emptyCaseStudy,
+  },
+  {
+    title: 'Aarohanum',
+    role: 'UI/UX — Frontend Experience — Responsive Design',
+    desc: 'Modern responsive website experience designed with clean hierarchy, immersive layouts, and premium interaction flow.',
+    scope: ['UI/UX', 'Frontend Structure', 'Responsive Systems', 'Interaction Design'],
+    links: { website: 'https://www.aarohanum.org/', instagram: null, behance: null, github: null, figma: null, prototype: null, presentation: null, pdf: null, research: null },
+    logo: null,
+    caseStudy: emptyCaseStudy,
+  },
+];
+
+const linkLabels = {
+  website: 'Live Website', instagram: 'Instagram', behance: 'Behance', github: 'GitHub',
+  figma: 'Figma', prototype: 'Prototype', presentation: 'Presentation', pdf: 'PDF', research: 'Research',
+};
+
+/* Case-study structure only — every value is null on purpose. No copy is invented here.
+   Each field renders as a clearly marked placeholder in CaseStudyModal until the real
+   content is supplied and dropped in as a plain string. */
+const caseStudyFields = [
+  { key: 'overview', label: 'Overview' },
+  { key: 'problem', label: 'Problem' },
+  { key: 'goals', label: 'Goals' },
+  { key: 'research', label: 'Research' },
+  { key: 'personas', label: 'Personas' },
+  { key: 'competitorAnalysis', label: 'Competitor Analysis' },
+  { key: 'journeyMaps', label: 'Journey Maps' },
+  { key: 'informationArchitecture', label: 'Information Architecture' },
+  { key: 'wireframes', label: 'Wireframes' },
+  { key: 'iterations', label: 'Iterations' },
+  { key: 'ui', label: 'Final UI' },
+  { key: 'prototype', label: 'Prototype' },
+  { key: 'testing', label: 'Testing' },
+  { key: 'metrics', label: 'Metrics' },
+  { key: 'results', label: 'Results' },
+  { key: 'reflection', label: 'Reflection' },
+  { key: 'lessonsLearned', label: 'Lessons Learned' },
+  { key: 'futureImprovements', label: 'Future Improvements' },
+];
+
+const emptyCaseStudy = Object.fromEntries(caseStudyFields.map(f => [f.key, null]));
+
+/* Fixed: 3 filenames corrected from .png to the real .jpg files on disk */
+const archiveItems = [
+  { title: 'Aylune Social Identity', category: 'Brand System', image: './assets/archive/aylune-social-identity.jpg' },
+  { title: 'Aylune Luxury Product Scene', category: 'Art Direction', image: './assets/archive/aylune-luxury-product-scene.jpg' },
+  { title: 'Sparadha E-Hiest Launch', category: 'Campaign Poster', image: './assets/archive/sparadha-ehiest-launch.png' },
+  { title: 'Byte & Build Campaign', category: 'Tech Event Creative', image: './assets/archive/byte-build-campaign.png' },
+  { title: 'Aylune Product System', category: 'Product Storytelling', image: './assets/archive/aylune-product-system.png' },
+  { title: 'E-Summit Speaker Session', category: 'Event Branding', image: './assets/archive/esummit-speaker-session.png' },
+  { title: 'Aylune Brand Collage', category: 'Visual Identity', image: './assets/archive/aylune-brand-collage.jpg' },
+  { title: 'Sparadha Website Launch', category: 'Launch Creative', image: './assets/archive/sparadha-website-launch.png' },
+  { title: 'Pitching Deck Poster', category: 'Startup Campaign', image: './assets/archive/pitching-deck-poster.png' },
+  { title: 'Editorial Cover System', category: 'Publication Design', image: './assets/archive/editorial-book-cover-system.png' },
+  { title: 'Ganesh Festival Poster', category: 'Cultural Creative', image: './assets/archive/ganesh-festival-poster.png' },
+  { title: 'Business Event Creative', category: 'Digital Campaign', image: './assets/archive/business-event-creative.png' },
+  { title: 'Aylune Logo Study', category: 'Logo Direction', image: './assets/archive/aylune-logo-study.png' },
+  { title: 'Sparadha Mission Poster', category: 'Brand Communication', image: './assets/archive/sparadha-mission-poster.png' },
+  { title: 'SkyD Factory Logo Card', category: 'Studio Identity', image: './assets/archive/skyd-factory-logo-card.png' },
+  { title: 'Shivaji Jayanti Poster', category: 'Festival Campaign', image: './assets/archive/shivaji-jayanti-poster.png' },
+];
+
+const experiences = [
+  { title: 'Founder & Creative Strategist — SkyD Factory', desc: 'Leading branding, UI/UX, digital storytelling, and creative systems for modern brands.' },
+  { title: 'Brand & Social Media Designer — The Aylune', desc: 'Built complete visual identity systems and aesthetic-first content ecosystems.' },
+  { title: 'UI/UX & Branding — Sparadha Bharat', desc: 'Worked on frontend visual direction, interface consistency, and branding execution.' },
+  { title: 'Frontend & UI Systems — Aarohanum', desc: 'Designed responsive digital experiences with immersive layout structures.' },
+  { title: 'Graphic Design Head — ByteARQ KITCOEK', desc: 'Led visual identity systems, event branding, and UI/UX workshops.' },
+  { title: 'Associate Graphic Designer — ECELL KITCOEK', desc: 'Worked on branding systems and creative assets across ESUMMIT initiatives.' },
+  { title: 'Freelance UI/UX & Graphic Designer', desc: 'Handled branding, websites, social media, presentations, UI systems, and marketing visuals across industries.' },
+  { title: 'Designer — Businesses Across Kolhapur', desc: 'Worked with businesses on branding, signage, packaging, and digital communication systems.' },
+];
+
+const education = [
+  { school: 'IIT Madras', programs: [
+    { degree: 'BS in Management & Data Science', years: '2025 — Present' },
+    { degree: 'B.Tech in Computer Science', years: '2023 — Present' },
+  ]},
+  { school: 'Chate Junior College of Science, Kolhapur' },
+  { school: 'Mahaveer Education Society, Kolhapur' },
+];
+
+const achievements = [
+  'Qualified JEE Advanced 2023 — AIR 608.',
+  'Branch Topper Across All Semesters.',
+  'Mathematics Master 2025 — AIR 02.',
+  'Hosted 2-Day UI/UX & Graphics Workshops for Students.',
+  'Taught Basic Graphics and UI to 25+ Students.',
+  'Worked on Branding, UI/UX & Social Media for Multiple Startups.',
+  'Founder of SkyD Factory — Creative Design & Branding Studio.',
+  'Awarded in Multiple Design, Tech & Creative Competitions.',
+];
+
+const paletteCommands = navItems.map(n => ({ label: n.label, target: n.target }));
+
+/* ---------- Real magnetic button (audit #9: 'magnetic' class did nothing magnetic) ----------
+   Tracks pointer position relative to the element's center and nudges it up to 10px toward
+   the cursor within a 60px radius, springing back on leave. Reserved for true primary actions
+   only — nav links and gallery tiles keep the quiet .magnetic (color/border only), per the
+   senior-review note that emphasis loses meaning when it's everywhere. */
+function MagneticButton({ as: Tag = 'button', className = '', children, ...rest }) {
+  const ref = useRef(null);
+
+  const onMove = (e) => {
+    const el = ref.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const relX = e.clientX - (rect.left + rect.width / 2);
+    const relY = e.clientY - (rect.top + rect.height / 2);
+    const pull = 0.25;
+    el.style.transform = `translate(${relX * pull}px, ${relY * pull}px)`;
+  };
+
+  const onLeave = () => {
+    const el = ref.current;
+    if (el) el.style.transform = 'translate(0, 0)';
+  };
+
+  return (
+    <Tag
+      ref={ref}
+      onMouseMove={onMove}
+      onMouseLeave={onLeave}
+      className={`magnetic-primary inline-flex items-center justify-center ${className}`}
+      {...rest}
+    >
+      {children}
+    </Tag>
+  );
+}
+
+/* ---------- Reveal-on-scroll hook (fixes: animations only firing on load) ---------- */
+
+function Reveal({ as: Tag = 'div', className = '', delay = 0, children, ...rest }) {
+  const ref = useRef(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setVisible(true);
+            io.unobserve(el);
+          }
+        });
+      },
+      { threshold: 0.15, rootMargin: '0px 0px -8% 0px' }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  const delayClass = delay === 1 ? 'reveal-delay-1' : delay === 2 ? 'reveal-delay-2' : delay === 3 ? 'reveal-delay-3' : '';
+
+  return (
+    <Tag ref={ref} className={`reveal ${delayClass} ${visible ? 'is-visible' : ''} ${className}`} {...rest}>
+      {children}
+    </Tag>
+  );
+}
+
+/* ---------- Command palette (new — was entirely absent) ---------- */
+
+function CommandPalette({ open, onClose }) {
+  const [query, setQuery] = useState('');
+  const [activeIndex, setActiveIndex] = useState(0);
+  const inputRef = useRef(null);
+  const listRef = useRef(null);
+
+  useEffect(() => {
+    if (open) {
+      setQuery('');
+      setActiveIndex(0);
+      setTimeout(() => inputRef.current?.focus(), 10);
+    }
+  }, [open]);
+
+  const results = paletteCommands.filter(c => c.label.toLowerCase().includes(query.toLowerCase()));
+
+  const go = useCallback((target) => {
+    onClose();
+    document.getElementById(target)?.scrollIntoView({ behavior: 'smooth' });
+  }, [onClose]);
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'Escape') { onClose(); return; }
+      if (!results.length) return;
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setActiveIndex((i) => (i + 1) % results.length);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setActiveIndex((i) => (i - 1 + results.length) % results.length);
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        const target = results[activeIndex]?.target;
+        if (target) go(target);
+      }
+    };
+    if (open) window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open, onClose, results, activeIndex, go]);
+
+  // Keep the active row in view when arrowing past the visible scroll area.
+  useEffect(() => {
+    const el = listRef.current?.children?.[activeIndex];
+    el?.scrollIntoView({ block: 'nearest' });
+  }, [activeIndex]);
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-[95] flex items-start justify-center pt-[14vh] px-4" role="dialog" aria-modal="true" aria-label="Command palette">
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-lg rounded-2xl border border-white/10 bg-[#0f0f10]/95 backdrop-blur-2xl shadow-[0_30px_120px_rgba(0,0,0,0.6)] overflow-hidden">
+        <input
+          ref={inputRef}
+          value={query}
+          onChange={(e) => { setQuery(e.target.value); setActiveIndex(0); }}
+          placeholder="Jump to a section…"
+          className="w-full bg-transparent px-6 py-5 text-lg text-white placeholder-zinc-400 outline-none border-b border-white/10"
+          aria-label="Search sections"
+          role="combobox"
+          aria-expanded="true"
+          aria-activedescendant={results[activeIndex] ? `cmd-${results[activeIndex].target}` : undefined}
+        />
+        <div ref={listRef} className="max-h-72 overflow-y-auto py-2" role="listbox">
+          {results.length === 0 && (
+            <p className="px-6 py-4 text-sm text-zinc-400">No matches. Try “work”, “contact”, “about”…</p>
+          )}
+          {results.map((r, i) => (
+            <button
+              key={r.target}
+              id={`cmd-${r.target}`}
+              role="option"
+              aria-selected={i === activeIndex}
+              onMouseEnter={() => setActiveIndex(i)}
+              onClick={() => go(r.target)}
+              className={`w-full text-left px-6 py-3 transition-colors flex items-center justify-between ${i === activeIndex ? 'bg-white/[0.08] text-white' : 'text-zinc-300'}`}
+            >
+              <span>{r.label}</span>
+              <span className="text-xs text-zinc-400">↵</span>
+            </button>
+          ))}
+        </div>
+        <div className="px-6 py-3 border-t border-white/10 text-[10px] uppercase tracking-[0.2em] text-zinc-500 flex justify-between">
+          <span>↑↓ to navigate · ↵ to select</span>
+          <span>Esc to close</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Mobile menu (new — V1 had none) ---------- */
+
+function MobileMenu({ open, onClose }) {
+  return (
+    <div
+      className={`fixed inset-0 z-[80] lg:hidden transition-opacity duration-300 ${open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+      aria-hidden={!open}
+    >
+      <div className="absolute inset-0 bg-black/90 backdrop-blur-xl" onClick={onClose} />
+      <nav className="relative h-full flex flex-col items-center justify-center gap-6" aria-label="Mobile navigation">
+        {navItems.map((item, i) => (
+          <a
+            key={item.target}
+            href={`#${item.target}`}
+            onClick={onClose}
+            className="studio-type text-3xl font-black text-zinc-100 hover:text-white transition-all duration-300"
+            style={{
+              opacity: open ? 1 : 0,
+              transform: open ? 'translateY(0)' : 'translateY(16px)',
+              transition: `opacity 400ms ease ${i * 60}ms, transform 400ms ease ${i * 60}ms`,
+            }}
+          >
+            {item.label}
+          </a>
+        ))}
+      </nav>
+    </div>
+  );
+}
+
+function SiddhiDesaiPortfolioV3() {
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [copied, setCopied] = useState(false);
+  const [cursorLabel, setCursorLabel] = useState('');
+  // Audit #1: the loader used to run its full 3.2s on every single visit, including a
+  // recruiter re-opening the tab five minutes later. It now only plays once per session.
+  const [showIntro] = useState(() => {
+    try {
+      if (sessionStorage.getItem('introSeen')) return false;
+      sessionStorage.setItem('introSeen', '1');
+      return true;
+    } catch (e) { return true; }
+  });
+  const [ambientPaused, setAmbientPaused] = useState(false);
+  const [activeCaseStudy, setActiveCaseStudy] = useState(null);
+
+  useEffect(() => {
+    let ticking = false;
+    const update = () => {
+      const h = document.documentElement;
+      const scrolled = (h.scrollTop) / (h.scrollHeight - h.clientHeight) * 100;
+      setProgress(isFinite(scrolled) ? scrolled : 0);
+      ticking = false;
+    };
+    const onScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(update);
+        ticking = true;
+      }
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  useEffect(() => {
+    // Audit #8: ambient-mesh ran its animation forever, even on a hidden tab. Pause it there.
+    const onVis = () => setAmbientPaused(document.hidden);
+    document.addEventListener('visibilitychange', onVis);
+    return () => document.removeEventListener('visibilitychange', onVis);
+  }, []);
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setPaletteOpen(true);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  const handleContactSubmit = (event) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const name = formData.get('name') || 'New client';
+    const email = formData.get('email') || 'Not shared';
+    const projectType = formData.get('projectType') || 'Not selected';
+    const timeline = formData.get('timeline') || 'Not selected';
+    const budget = formData.get('budget') || 'Not selected';
+    const industry = formData.get('industry') || 'Not shared';
+    const city = formData.get('city') || 'Not shared';
+    const teamSize = formData.get('teamSize') || 'Not selected';
+    const message = formData.get('message') || 'No message added';
+
+    const subject = `Project Inquiry — ${name}`;
+    const body = [
+      `Name: ${name}`, `Email: ${email}`, `Project Type: ${projectType}`,
+      `Timeline: ${timeline}`, `Budget Range: ${budget}`, `Industry / Niche: ${industry}`,
+      `City: ${city}`, `Team Size: ${teamSize}`, '', 'Project Message:', message,
+    ].join('\n');
+
+    window.location.href = `mailto:siddhidesai0209@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  };
+
+  const handlePointerMove = (event) => {
+    event.currentTarget.style.setProperty('--cursor-x', `${event.clientX}px`);
+    event.currentTarget.style.setProperty('--cursor-y', `${event.clientY}px`);
+    const isInteractive = event.target.closest?.('a, button, input, select, textarea');
+    event.currentTarget.style.setProperty('--cursor-size', isInteractive ? '8rem' : '5rem');
+    // Audit #9: the cursor resized on hover but never said anything. It now surfaces
+    // whatever the nearest [data-cursor] element declares (Visit / Expand / View), or clears.
+    const labelEl = event.target.closest?.('[data-cursor]');
+    setCursorLabel(labelEl ? labelEl.getAttribute('data-cursor') : '');
+  };
+
+  const copyEmail = async () => {
+    try {
+      await navigator.clipboard.writeText('siddhidesai0209@gmail.com');
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1600);
+    } catch (e) { /* clipboard unavailable — mailto link still works */ }
+  };
+
+  return (
+    <div
+      onMouseMove={handlePointerMove}
+      className="min-h-screen bg-[#0a0a0a] text-white overflow-x-hidden font-sans selection:bg-violet-300 selection:text-black"
+      style={{ '--cursor-x': '50vw', '--cursor-y': '50vh', '--cursor-size': '5rem' }}
+    >
+      {/* Scroll progress */}
+      <div className="progress-bar" style={{ width: `${progress}%` }} />
+
+      {/* Intro loader — only renders at all on a visitor's first page in this session */}
+      {showIntro && (
+        <div className="intro-screen fixed inset-0 z-[100] bg-black flex items-center justify-center pointer-events-none">
+          <div className="w-[min(520px,80vw)] text-center">
+            <p className="uppercase tracking-[0.55em] text-xs text-zinc-400 mb-6">Siddhi Desai</p>
+            <h2 className="display-type text-4xl md:text-6xl font-black leading-none">Digital Luxury Studio</h2>
+            <div className="mt-8 h-px bg-white/10 overflow-hidden">
+              <div className="intro-line h-full bg-gradient-to-r from-violet-400 via-white to-blue-400" />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Background — decorative only */}
+      <div className="fixed inset-0 -z-10 overflow-hidden" aria-hidden="true">
+        <div className={`ambient-mesh absolute -inset-24 blur-2xl ${ambientPaused ? 'is-paused' : ''}`} />
+        <div className="noise-layer absolute inset-0" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.65)_74%)]" />
+      </div>
+
+      <div aria-hidden="true" className="cursor-glow pointer-events-none fixed z-[60] hidden h-20 w-20 rounded-full border border-white/10 bg-violet-300/10 blur-md mix-blend-screen md:flex md:items-center md:justify-center">
+        <span className={`cursor-label ${cursorLabel ? 'is-active' : ''}`}>{cursorLabel}</span>
+      </div>
+
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
+      <MobileMenu open={mobileOpen} onClose={() => setMobileOpen(false)} />
+      <CaseStudyModal project={activeCaseStudy} onClose={() => setActiveCaseStudy(null)} />
+
+      {/* Navbar — now with a working mobile trigger + command palette entry */}
+      <nav className="fixed top-0 left-0 w-full z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
+          <div className="rounded-full border border-white/10 bg-black/35 backdrop-blur-2xl px-5 py-3 flex justify-between items-center shadow-[0_18px_70px_rgba(0,0,0,0.22)]">
+            <a href="#home" className="display-type text-lg font-bold tracking-wide">Siddhi Desai</a>
+
+            <div className="hidden lg:flex items-center gap-6 text-xs text-zinc-300">
+              {navItems.map((item) => (
+                <a
+                  key={item.target}
+                  href={`#${item.target}`}
+                  className="magnetic relative group rounded-full px-3 py-2 hover:text-white transition-all duration-300"
+                >
+                  {item.label}
+                  <span className="absolute -bottom-2 left-0 w-0 h-px bg-white transition-all duration-300 group-hover:w-full" />
+                </a>
+              ))}
+              <button
+                onClick={() => setPaletteOpen(true)}
+                className="magnetic rounded-full border border-white/10 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-zinc-400 hover:text-white hover:border-white/30 transition-all duration-300"
+                aria-label="Open command palette"
+              >
+                ⌘K
+              </button>
+            </div>
+
+            <div className="flex lg:hidden items-center gap-2">
+              <button
+                onClick={() => setPaletteOpen(true)}
+                className="rounded-full border border-white/10 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-zinc-400"
+                aria-label="Open command palette"
+              >
+                ⌘K
+              </button>
+              <button
+                onClick={() => setMobileOpen(true)}
+                className="rounded-full border border-white/10 p-2.5 text-zinc-200"
+                aria-label="Open menu"
+                aria-expanded={mobileOpen}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <line x1="3" y1="6" x2="21" y2="6" />
+                  <line x1="3" y1="12" x2="21" y2="12" />
+                  <line x1="3" y1="18" x2="21" y2="18" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      <main id="main">
+        {/* Hero */}
+        <section id="home" className="scene min-h-screen flex items-center px-6 pt-28 pb-16 relative overflow-hidden">
+          <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#0a0a0a] to-transparent" />
+          <div className="max-w-7xl mx-auto w-full grid lg:grid-cols-[1.08fr_0.92fr] gap-10 lg:gap-16 items-center relative z-10">
+            <div>
+              <Reveal as="p" className="uppercase tracking-[0.45em] text-xs text-zinc-400 mb-6">
+                PRODUCT &amp; BRAND DESIGNER &bull; UI/UX SYSTEMS &bull; IIT MADRAS
+              </Reveal>
+
+              {/* Name is no longer gradient-clipped — per the Apple HIG finding, a gradient on
+                  your own name reads as a marketing flourish, not an identity. Solid, confident,
+                  and the mask-line reveal does the work motion used to do here instead. */}
+              <h1 className="display-type text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-black leading-[0.85] mb-8 text-white">
+                <span className="mask-line"><span style={{ animationDelay: '120ms' }}>Siddhi</span></span>
+                <span className="mask-line"><span style={{ animationDelay: '260ms' }}>Desai</span></span>
+              </h1>
+
+              <Reveal delay={2} className="max-w-2xl">
+                <p className="text-2xl md:text-4xl font-semibold leading-tight text-zinc-100 mb-5">
+                  I design how products look, feel, and behave — branding is one output of that, not the whole craft.
+                </p>
+                <p className="text-zinc-400 text-base md:text-lg leading-relaxed">
+                  I work across UI/UX systems, interaction design, and brand identity, grounded in a Management &amp; Data Science background at IIT Madras — currently applying that at both product and studio scale.
+                </p>
+              </Reveal>
+
+              <Reveal delay={3} className="mt-9 flex flex-wrap gap-4">
+                <MagneticButton as="a" href="#projects" className="px-8 py-4 rounded-full bg-white text-black font-semibold">
+                  Explore Selected Work
+                </MagneticButton>
+                <MagneticButton as="a" href="#contact" className="px-8 py-4 rounded-full border border-white/15 bg-white/[0.04] backdrop-blur-xl hover:bg-white/10">
+                  Start a Conversation
+                </MagneticButton>
+              </Reveal>
+            </div>
+
+            <Reveal delay={2} className="relative">
+              <div className="cinematic-card relative overflow-hidden rounded-[2.25rem] border border-white/10 bg-white/[0.045] backdrop-blur-2xl p-5 md:p-7">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_15%,rgba(192,132,252,0.24),transparent_34%),radial-gradient(circle_at_85%_30%,rgba(91,140,255,0.18),transparent_30%)]" />
+                <div className="relative rounded-[1.75rem] border border-white/10 bg-black/45 p-6 md:p-8">
+                  <div className="flex items-center justify-between border-b border-white/10 pb-5">
+                    <p className="uppercase tracking-[0.28em] text-[10px] text-zinc-400">Studio Signal</p>
+                    <span className="rounded-full border border-emerald-300/30 bg-emerald-300/10 px-3 py-1 text-[10px] text-emerald-200">
+                      Available
+                    </span>
+                  </div>
+                  <div className="py-10">
+                    <p className="text-zinc-400 text-sm mb-4">Creative Direction</p>
+                    <h2 className="display-type text-4xl md:text-6xl font-black leading-[0.92]">
+                      Emotion-Led <br /> Digital <br /> Identity
+                    </h2>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    {['Brand Systems', 'UI/UX', 'Storytelling', 'Social Ecosystems'].map((item) => (
+                      <div key={item} className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                        <p className="text-sm text-zinc-300">{item}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </Reveal>
+          </div>
+        </section>
+
+        {/* Trust bar — folded under About in the nav's mental model, kept visually as a bridge */}
+        <section id="trust" className="px-6 pb-14">
+          <Reveal className="max-w-6xl mx-auto rounded-[1.5rem] border border-white/10 bg-white/[0.03] backdrop-blur-xl p-6">
+            <div className="grid lg:grid-cols-2 gap-8">
+              <div>
+                <p className="uppercase tracking-[0.3em] text-sm text-zinc-400 mb-4">Selected Expertise Across</p>
+                <div className="flex flex-wrap gap-3 text-zinc-300">
+                  {trustExpertise.map((item) => (
+                    <span key={item} className="px-4 py-2 rounded-full border border-white/10 bg-white/[0.03]">{item}</span>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="uppercase tracking-[0.3em] text-sm text-zinc-400 mb-4">Worked On</p>
+                <div className="flex flex-wrap gap-3 text-zinc-300">
+                  {workedOn.map((item) => (
+                    <span key={item} className="px-4 py-2 rounded-full border border-white/10 bg-white/[0.03]">{item}</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </Reveal>
+        </section>
+
+        {/* About */}
+        <section id="about" className="py-20 px-6">
+          <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
+            <Reveal>
+              <p className="uppercase tracking-[0.3em] text-sm text-zinc-400 mb-4">About Me</p>
+              <h2 className="display-type text-4xl md:text-5xl font-black leading-tight mb-6">
+                Design That <br /> Feels Human.
+              </h2>
+              <div className="space-y-4 text-zinc-300 text-base leading-relaxed">
+                <p>I'm Siddhi Desai — a multidisciplinary designer and creative strategist focused on building brands that feel emotionally intelligent, visually premium, and digitally unforgettable.</p>
+                <p>My work combines aesthetics, psychology, storytelling, interaction design, branding systems, and visual communication to create experiences that people don't just scroll past — they connect with.</p>
+                <p>Currently pursuing BS in Management &amp; Data Science and B.Tech in Computer Science at IIT Madras while simultaneously working across UI/UX, branding, social media ecosystems, frontend experiences, visual strategy, and creative direction.</p>
+                <p>Over the years, I've helped brands and startups transform ideas into cohesive digital identities through immersive visuals, aesthetic storytelling, and strategic design systems.</p>
+                <p>I believe strong branding is not about decoration. It is about perception, emotional recall, trust, clarity, identity, and experience.</p>
+              </div>
+              <a
+                href="#contact"
+                className="magnetic inline-flex mt-6 items-center gap-2 rounded-full border border-white/15 px-6 py-3 text-sm text-zinc-200 hover:bg-white/10 transition-all duration-300"
+              >
+                Download Resume
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 3v14m0 0l-5-5m5 5l5-5M4 21h16"/></svg>
+              </a>
+              <p className="text-xs text-zinc-500 mt-2">Link this to your actual résumé file when you deploy — placeholder points to Contact for now.</p>
+            </Reveal>
+
+            <div className="grid grid-cols-2 gap-4">
+              {highlights.map((item, i) => (
+                <Reveal key={item.title} delay={(i % 3) + 1} className="rounded-[1.5rem] border border-white/10 bg-white/5 backdrop-blur-xl p-6 hover:-translate-y-1 transition-all duration-500">
+                  <h3 className="text-xl font-bold mb-3">{item.title}</h3>
+                  <p className="text-zinc-400 text-sm leading-relaxed">{item.desc}</p>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Services */}
+        <section id="services" className="scene py-20 md:py-24 px-6 bg-white/[0.015] border-y border-white/5">
+          <div className="max-w-7xl mx-auto">
+            <Reveal className="grid lg:grid-cols-[0.78fr_1.22fr] gap-10 items-end mb-12">
+              <div>
+                <p className="uppercase tracking-[0.35em] text-xs text-zinc-400 mb-4">Creative Systems</p>
+                <h2 className="display-type text-5xl md:text-7xl font-black max-w-3xl leading-[0.92]">
+                  Identities built before they speak.
+                </h2>
+              </div>
+              <p className="text-zinc-400 text-lg leading-relaxed max-w-2xl">
+                Branding, UI, social ecosystems, and creative direction shaped into one premium visual language — available for select studio collaborations alongside my own product design work.
+              </p>
+            </Reveal>
+
+            <div className="grid lg:grid-cols-2 gap-5">
+              {services.map((service, index) => (
+                <Reveal key={service.title} delay={(index % 3) + 1} as="article" className="cinematic-card group relative overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 md:p-8 backdrop-blur-2xl hover:border-violet-300/35 transition-all duration-500">
+                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-[radial-gradient(circle_at_80%_20%,rgba(124,92,255,0.18),transparent_32%),radial-gradient(circle_at_20%_90%,rgba(91,140,255,0.12),transparent_30%)]" />
+                  <div className="relative z-10 grid sm:grid-cols-[auto_1fr] gap-6">
+                    <span className="display-type text-6xl font-black text-white/10">0{index + 1}</span>
+                    <div>
+                      <h3 className="text-3xl font-black mb-3">{service.title}</h3>
+                      <p className="text-zinc-400 leading-relaxed">{service.desc}</p>
+                      <div className="mt-6 grid grid-cols-2 gap-2">
+                        {service.includes.slice(0, 6).map((item) => (
+                          <span key={item} className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-xs text-zinc-400">{item}</span>
+                        ))}
+                      </div>
+                      <div className="mt-6 border-t border-white/10 pt-5">
+                        <p className="uppercase tracking-[0.25em] text-[10px] text-zinc-400 mb-2">{service.noteTitle}</p>
+                        <p className="text-zinc-300 text-sm leading-relaxed">{service.note}</p>
+                      </div>
+                    </div>
+                  </div>
+                </Reveal>
+              ))}
+            </div>
+
+            {/* New in V3: the system behind this page, shown rather than left implicit in the
+                CSS. This exists because a systems-level design review looks for proof of reuse
+                and consistency, not just a single expressive page. */}
+            <Reveal className="mt-16 rounded-[2rem] border border-white/10 bg-white/[0.03] p-6 md:p-8">
+              <p className="uppercase tracking-[0.3em] text-xs text-zinc-400 mb-2">The System Behind This Page</p>
+              <h3 className="display-type text-3xl md:text-4xl font-black mb-8">Not decoration — decisions.</h3>
+              <div className="grid md:grid-cols-3 gap-8">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.2em] text-zinc-400 mb-3">Color</p>
+                  <div className="flex gap-2">
+                    {[
+                      { hex: '#0A0A0A', name: 'Base' },
+                      { hex: '#C084FC', name: 'Violet' },
+                      { hex: '#60A5FA', name: 'Blue' },
+                      { hex: '#F5F5F5', name: 'Ink' },
+                    ].map((c) => (
+                      <div key={c.hex} className="text-center">
+                        <div className="h-10 w-10 rounded-full border border-white/15" style={{ background: c.hex }} />
+                        <p className="text-[10px] text-zinc-400 mt-2">{c.name}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-[0.2em] text-zinc-400 mb-3">Type</p>
+                  <p className="display-type text-2xl font-black leading-none">Fraunces</p>
+                  <p className="text-sm text-zinc-400">Headlines only</p>
+                  <p className="text-lg font-semibold mt-3 leading-none">Inter</p>
+                  <p className="text-sm text-zinc-400">Everything else</p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-[0.2em] text-zinc-400 mb-3">One rule, applied everywhere</p>
+                  <p className="text-sm text-zinc-300 leading-relaxed">
+                    Only one primary action per view gets real magnetic motion. Everything else — nav, tags, gallery — gets a quiet color/border transition. That restraint is a design decision, repeated consistently across every section on this page.
+                  </p>
+                </div>
+              </div>
+            </Reveal>
+          </div>
+        </section>
+
+        {/* Featured Projects — fixed logo images, added visible case-note */}
+        <section id="projects" className="scene py-20 md:py-24 px-6">
+          <div className="max-w-7xl mx-auto">
+            <Reveal className="mb-12 max-w-5xl">
+              <p className="uppercase tracking-[0.35em] text-xs text-zinc-400 mb-4">Selected Work</p>
+              <h2 className="display-type text-5xl md:text-7xl font-black leading-[0.92]">
+                Brand worlds with cinematic identity.
+              </h2>
+            </Reveal>
+
+            <div className="space-y-8">
+              {projects.map((project, index) => (
+                <Reveal key={project.title} as="article" className="project-card cinematic-card group relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-white/[0.035] backdrop-blur-2xl p-6 md:p-8">
+                  <div className="absolute inset-0 opacity-80 bg-[radial-gradient(circle_at_20%_20%,rgba(124,92,255,0.16),transparent_30%),radial-gradient(circle_at_80%_60%,rgba(91,140,255,0.12),transparent_34%)]" />
+                  <div className="relative z-10 grid xl:grid-cols-[0.92fr_1.08fr] gap-8 items-center">
+                    <div className={index % 2 === 1 ? 'xl:order-2' : ''}>
+                      <p className="uppercase tracking-[0.35em] text-xs text-zinc-400 mb-4">0{index + 1} / Selected Work</p>
+                      <h3 className="display-type text-5xl md:text-7xl font-black leading-[0.92] mb-5">{project.title}</h3>
+                      <p className="text-zinc-400 text-sm uppercase tracking-[0.18em] mb-6">{project.role}</p>
+                      <p className="text-zinc-300 text-lg leading-relaxed max-w-2xl mb-7">{project.desc}</p>
+                      <div className="flex flex-wrap gap-3 mb-7">
+                        {project.scope.map((tag) => (
+                          <span key={tag} className="rounded-full border border-white/10 bg-black/20 px-4 py-2 text-sm text-zinc-300">{tag}</span>
+                        ))}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-3">
+                        {Object.entries(project.links).filter(([, url]) => url).map(([key, url], i) => (
+                          i === 0 ? (
+                            <MagneticButton
+                              key={key}
+                              as="a"
+                              href={url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              data-cursor="Visit"
+                              className="rounded-full border border-white/10 bg-white text-black px-7 py-4 text-sm font-black"
+                            >
+                              {linkLabels[key]} ↗
+                            </MagneticButton>
+                          ) : (
+                            <a
+                              key={key}
+                              href={url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              data-cursor="Visit"
+                              className="magnetic rounded-full border border-white/10 px-5 py-3 text-sm text-zinc-300 hover:text-white hover:border-white/30"
+                            >
+                              {linkLabels[key]}
+                            </a>
+                          )
+                        ))}
+                        <button
+                          onClick={() => setActiveCaseStudy(project)}
+                          className="magnetic rounded-full border border-dashed border-white/20 px-5 py-3 text-sm text-zinc-400 hover:text-white hover:border-white/40"
+                        >
+                          Case Study Outline
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="relative min-h-[360px]">
+                      <div className="project-visual absolute inset-0 rounded-[2rem] border border-white/10 bg-black/35 p-5">
+                        <div className="h-full rounded-[1.5rem] border border-white/10 bg-gradient-to-br from-white/[0.12] to-white/[0.025] flex items-center justify-center overflow-hidden">
+                          {project.logo ? (
+                            <img src={project.logo} alt={`${project.title} visual identity`} className="h-full w-full object-cover" />
+                          ) : (
+                            <div className="text-center px-8">
+                              <p className="uppercase tracking-[0.35em] text-xs text-zinc-400 mb-5">Visual System</p>
+                              <h4 className="display-type text-4xl md:text-6xl font-black leading-[0.92]">{project.title}</h4>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </Reveal>
+              ))}
+            </div>
+
+            <p className="text-xs text-zinc-500 mt-8 max-w-2xl">
+              Each card links out to the live project today. When you're ready, this is the section to expand into full case studies — problem, process, iterations, and reflection — using your real project notes so nothing here is invented.
+            </p>
+          </div>
+        </section>
+
+        {/* Gallery — fixed 3 broken image extensions, added click-to-expand lightbox */}
+        <GallerySection />
+
+        {/* Experience */}
+        <section id="experience" className="py-20 px-6">
+          <div className="max-w-6xl mx-auto">
+            <Reveal className="mb-8">
+              <p className="uppercase tracking-[0.3em] text-xs text-zinc-400 mb-3">Experience</p>
+              <h2 className="display-type text-4xl md:text-5xl font-black leading-tight max-w-4xl">
+                Designing, Building &amp; Leading Since 2022
+              </h2>
+            </Reveal>
+            <div className="grid md:grid-cols-2 gap-4">
+              {experiences.map((exp, i) => (
+                <Reveal key={exp.title} delay={(i % 3) + 1} className="p-5 rounded-[1.25rem] border border-white/10 bg-white/[0.03] backdrop-blur-xl hover:border-violet-400/30 transition-all duration-300">
+                  <h3 className="text-lg font-semibold mb-2">{exp.title}</h3>
+                  <p className="text-zinc-400 text-sm leading-relaxed">{exp.desc}</p>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Education + Achievements */}
+        <section id="achievements" className="py-20 px-6 bg-white/[0.02] border-y border-white/5">
+          <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-10">
+            <Reveal>
+              <p className="uppercase tracking-[0.3em] text-xs text-zinc-400 mb-3">Education</p>
+              <h2 className="display-type text-4xl font-black mb-7">Academic Background</h2>
+              <div className="space-y-6">
+                {education.map((edu) => (
+                  <div key={edu.school} className="border-l border-violet-400 pl-6">
+                    <h3 className="text-xl font-semibold">{edu.school}</h3>
+                    {edu.programs && (
+                      <div className="space-y-5 mt-4">
+                        {edu.programs.map((program) => (
+                          <div key={program.degree}>
+                            <p className="text-zinc-300">{program.degree}</p>
+                            <p className="text-zinc-400 mt-1">{program.years}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </Reveal>
+
+            <Reveal delay={1}>
+              <p className="uppercase tracking-[0.3em] text-xs text-zinc-400 mb-3">Achievements</p>
+              <h2 className="display-type text-4xl font-black mb-7">Highlights</h2>
+              <div className="grid gap-3">
+                {achievements.map((item) => (
+                  <div key={item} className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm">{item}</div>
+                ))}
+              </div>
+            </Reveal>
+          </div>
+        </section>
+
+        {/* Contact */}
+        <section id="contact" className="scene py-24 md:py-28 px-6 relative overflow-hidden bg-[#050505]">
+          <div className="absolute inset-0 opacity-15 [background-image:linear-gradient(rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px)] [background-size:72px_72px]" />
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+
+          <div className="max-w-7xl mx-auto w-full relative z-10">
+            <Reveal className="cinematic-card rounded-[2.5rem] border border-white/10 bg-white/[0.04] backdrop-blur-2xl p-5 md:p-8 lg:p-10 shadow-[0_34px_130px_rgba(139,92,246,0.18)]">
+              <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-7 items-start pb-8 border-b border-white/10">
+                <div>
+                  <p className="uppercase tracking-[0.35em] text-xs text-zinc-400 mb-4">Contact &amp; Collaborations</p>
+                  <h2 className="display-type text-5xl md:text-7xl font-black leading-[0.92] max-w-4xl">
+                    Your brand should not look available.
+                    <span className="block text-transparent bg-clip-text bg-gradient-to-r from-violet-300 via-white to-blue-300">
+                      It should feel desired.
+                    </span>
+                  </h2>
+                  <div className="mt-5 flex flex-col sm:flex-row sm:items-center gap-4">
+                    <p className="text-zinc-400 text-base leading-relaxed max-w-2xl">
+                      Open to studio collaborations, freelance briefs, and product design roles — the form below is for project inquiries; for a hiring conversation, email or LinkedIn is fastest.
+                    </p>
+                    <span className="shrink-0 rounded-full border border-emerald-300/30 bg-emerald-300/10 px-4 py-2 text-emerald-200 text-xs">
+                      Open for selective work
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid gap-3">
+                  <button
+                    onClick={copyEmail}
+                    className="magnetic group rounded-[1.5rem] border border-white/10 bg-white text-black p-5 transition-all duration-300 text-left w-full"
+                  >
+                    <p className="uppercase tracking-[0.28em] text-[10px] text-black/50 mb-3">Email</p>
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="min-w-0 whitespace-nowrap text-[clamp(0.78rem,2.2vw,1.35rem)] font-black leading-none">
+                        siddhidesai0209@gmail.com
+                      </p>
+                      <span className="shrink-0 rounded-full bg-black text-white px-3 py-2 text-xs font-semibold group-hover:bg-violet-600 transition-all duration-300">
+                        {copied ? 'Copied ✓' : 'Copy'}
+                      </span>
+                    </div>
+                  </button>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <a href="https://www.instagram.com/_siddhi_0203" target="_blank" rel="noopener noreferrer" className="rounded-[1.25rem] border border-white/10 bg-black/30 p-4 hover:bg-white/10 hover:border-blue-300/30 transition-all duration-300">
+                      <p className="uppercase tracking-[0.26em] text-[10px] text-zinc-400 mb-3">Instagram</p>
+                      <p className="text-lg font-semibold">@_siddhi_0203</p>
+                    </a>
+                    <a href="https://www.linkedin.com/in/siddhidesai0209" target="_blank" rel="noopener noreferrer" className="rounded-[1.25rem] border border-white/10 bg-black/30 p-4 hover:bg-white/10 hover:border-violet-300/30 transition-all duration-300">
+                      <p className="uppercase tracking-[0.26em] text-[10px] text-zinc-400 mb-3">LinkedIn</p>
+                      <p className="text-lg font-semibold">siddhidesai0209</p>
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+              <form onSubmit={handleContactSubmit} className="pt-8">
+                <div className="grid lg:grid-cols-[0.78fr_1.22fr] gap-8">
+                  <div>
+                    <p className="uppercase tracking-[0.3em] text-xs text-zinc-400 mb-4">Project Inquiry</p>
+                    <h3 className="display-type text-4xl md:text-5xl font-black leading-[0.94]">Send the idea. I will shape the identity.</h3>
+                    <p className="mt-5 text-zinc-400 leading-relaxed">This brief opens a ready-to-send email with your project context, so the first conversation starts clear.</p>
+                  </div>
+
+                  <div className="grid gap-3">
+                    <div className="grid md:grid-cols-2 gap-3">
+                      <label className="block">
+                        <span className="block uppercase tracking-[0.24em] text-[10px] text-zinc-400 mb-2">Name</span>
+                        <input name="name" required className="w-full rounded-xl border border-white/10 bg-black/35 px-4 py-3 text-white outline-none transition-all duration-300 focus:border-violet-300/60 focus:bg-black/50" placeholder="Your name" />
+                      </label>
+                      <label className="block">
+                        <span className="block uppercase tracking-[0.24em] text-[10px] text-zinc-400 mb-2">Email</span>
+                        <input type="email" name="email" required className="w-full rounded-xl border border-white/10 bg-black/35 px-4 py-3 text-white outline-none transition-all duration-300 focus:border-violet-300/60 focus:bg-black/50" placeholder="you@example.com" />
+                      </label>
+                    </div>
+
+                    <div className="grid md:grid-cols-3 gap-3">
+                      <label className="block">
+                        <span className="block uppercase tracking-[0.24em] text-[10px] text-zinc-400 mb-2">Industry / Niche</span>
+                        <input name="industry" className="w-full rounded-xl border border-white/10 bg-black/35 px-4 py-3 text-white outline-none transition-all duration-300 focus:border-violet-300/60 focus:bg-black/50" placeholder="Fashion, wellness, SaaS..." />
+                      </label>
+                      <label className="block">
+                        <span className="block uppercase tracking-[0.24em] text-[10px] text-zinc-400 mb-2">City</span>
+                        <input name="city" className="w-full rounded-xl border border-white/10 bg-black/35 px-4 py-3 text-white outline-none transition-all duration-300 focus:border-violet-300/60 focus:bg-black/50" placeholder="Your city" />
+                      </label>
+                      <label className="block">
+                        <span className="block uppercase tracking-[0.24em] text-[10px] text-zinc-400 mb-2">Team Size</span>
+                        <select name="teamSize" defaultValue="" className="w-full rounded-xl border border-white/10 bg-black/35 px-4 py-3 text-white outline-none transition-all duration-300 focus:border-violet-300/60 focus:bg-black/50">
+                          <option value="">Choose</option>
+                          <option>Solo founder</option>
+                          <option>2-10 employees</option>
+                          <option>11-50 employees</option>
+                          <option>50+ employees</option>
+                        </select>
+                      </label>
+                    </div>
+
+                    <div className="grid md:grid-cols-3 gap-3">
+                      <label className="block">
+                        <span className="block uppercase tracking-[0.24em] text-[10px] text-zinc-400 mb-2">Project</span>
+                        <select name="projectType" defaultValue="" required className="w-full rounded-xl border border-white/10 bg-black/35 px-4 py-3 text-white outline-none transition-all duration-300 focus:border-violet-300/60 focus:bg-black/50">
+                          <option value="" disabled>Choose</option>
+                          <option>Brand Identity</option>
+                          <option>Website / UI UX</option>
+                          <option>Social Media</option>
+                          <option>Creative Direction</option>
+                        </select>
+                      </label>
+                      <label className="block">
+                        <span className="block uppercase tracking-[0.24em] text-[10px] text-zinc-400 mb-2">Timeline</span>
+                        <select name="timeline" defaultValue="" className="w-full rounded-xl border border-white/10 bg-black/35 px-4 py-3 text-white outline-none transition-all duration-300 focus:border-violet-300/60 focus:bg-black/50">
+                          <option value="">Flexible</option>
+                          <option>ASAP</option>
+                          <option>2-4 weeks</option>
+                          <option>1-2 months</option>
+                        </select>
+                      </label>
+                      <label className="block">
+                        <span className="block uppercase tracking-[0.24em] text-[10px] text-zinc-400 mb-2">Budget</span>
+                        <select name="budget" defaultValue="" className="w-full rounded-xl border border-white/10 bg-black/35 px-4 py-3 text-white outline-none transition-all duration-300 focus:border-violet-300/60 focus:bg-black/50">
+                          <option value="">Discuss</option>
+                          <option>Starter</option>
+                          <option>Premium</option>
+                          <option>Full Ecosystem</option>
+                        </select>
+                      </label>
+                    </div>
+
+                    <label className="block">
+                      <span className="block uppercase tracking-[0.24em] text-[10px] text-zinc-400 mb-2">Message</span>
+                      <textarea name="message" required rows="4" className="w-full resize-none rounded-xl border border-white/10 bg-black/35 px-4 py-3 text-white outline-none transition-all duration-300 focus:border-violet-300/60 focus:bg-black/50" placeholder="Tell me what you want to build..." />
+                    </label>
+
+                    <MagneticButton as="button" type="submit" className="w-full rounded-xl bg-white px-7 py-4 text-black font-black hover:bg-violet-200">
+                      Start Project
+                    </MagneticButton>
+                  </div>
+                </div>
+              </form>
+            </Reveal>
+          </div>
+        </section>
+      </main>
+
+      {/* Footer */}
+      <footer className="px-6 py-14 border-t border-white/10">
+        <div className="max-w-7xl mx-auto grid gap-10 md:grid-cols-[1.4fr_1fr_1fr] md:gap-8">
+          <div>
+            <p className="display-type text-3xl md:text-4xl font-black leading-tight">
+              Let's build something worth remembering.
+            </p>
+            <p className="text-zinc-400 text-sm mt-3">© {new Date().getFullYear()} Siddhi Desai. Designed and built in Kolhapur.</p>
+          </div>
+
+          <nav aria-label="Footer navigation">
+            <p className="uppercase tracking-[0.25em] text-[10px] text-zinc-400 mb-4">Site</p>
+            <div className="flex flex-col gap-2 text-sm text-zinc-400">
+              <a href="#about" className="hover:text-white transition-colors w-fit">About</a>
+              <a href="#projects" className="hover:text-white transition-colors w-fit">Selected Work</a>
+              <a href="#gallery" className="hover:text-white transition-colors w-fit">Visual Archive</a>
+              <a href="#contact" className="hover:text-white transition-colors w-fit">Contact</a>
+              <a href="#home" className="hover:text-white transition-colors w-fit">Back to top ↑</a>
+            </div>
+          </nav>
+
+          <div>
+            <p className="uppercase tracking-[0.25em] text-[10px] text-zinc-400 mb-4">Elsewhere</p>
+            <div className="flex flex-col gap-2 text-sm text-zinc-400">
+              <a href="https://www.instagram.com/_siddhi_0203" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors w-fit">Instagram</a>
+              <a href="https://www.linkedin.com/in/siddhidesai0209" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors w-fit">LinkedIn</a>
+              <a href="mailto:siddhidesai0209@gmail.com" className="hover:text-white transition-colors w-fit">Email</a>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+/* Gallery as its own component so the lightbox state doesn't clutter the root */
+function GallerySection() {
+  const [activeIndex, setActiveIndex] = useState(null);
+  const lastTriggerRef = useRef(null);
+  const active = activeIndex === null ? null : archiveItems[activeIndex];
+
+  const openAt = (index, triggerEl) => {
+    lastTriggerRef.current = triggerEl;
+    setActiveIndex(index);
+  };
+  const closeLightbox = () => {
+    setActiveIndex(null);
+    lastTriggerRef.current?.focus();
+  };
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if (activeIndex === null) return;
+      if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'ArrowRight') setActiveIndex((i) => (i + 1) % archiveItems.length);
+      if (e.key === 'ArrowLeft') setActiveIndex((i) => (i - 1 + archiveItems.length) % archiveItems.length);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [activeIndex]);
+
+  return (
+    <section id="gallery" className="scene py-20 md:py-24 px-6 bg-white/[0.015] border-y border-white/5">
+      <div className="max-w-7xl mx-auto">
+        <Reveal className="grid lg:grid-cols-[0.9fr_1.1fr] gap-10 items-end mb-12">
+          <div>
+            <p className="uppercase tracking-[0.35em] text-xs text-zinc-400 mb-4">Visual Archive</p>
+            <h2 className="display-type text-5xl md:text-7xl font-black max-w-4xl leading-[0.92]">
+              A living archive of taste.
+            </h2>
+          </div>
+          <p className="text-zinc-400 text-lg leading-relaxed max-w-2xl">
+            Posters, UI screens, pitch decks, campaigns, and creative experiments balanced between emotion, structure, aesthetics, and strategy. Click any piece to expand.
+          </p>
+        </Reveal>
+
+        <div className="columns-1 sm:columns-2 lg:columns-3 gap-5 space-y-5">
+          {archiveItems.map((item, index) => (
+            <Reveal
+              key={item.title}
+              delay={(index % 3) + 1}
+              as="button"
+              onClick={(e) => openAt(index, e.currentTarget)}
+              data-cursor="Expand"
+              className="gallery-tile group break-inside-avoid overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.04] shadow-2xl shadow-black/40 backdrop-blur-xl text-left w-full block"
+              aria-label={`Expand ${item.title}`}
+            >
+              <div className={`${index % 3 === 0 ? 'aspect-[4/5]' : index % 3 === 1 ? 'aspect-[5/4]' : 'aspect-square'} relative overflow-hidden bg-gradient-to-br from-violet-500/20 via-white/[0.03] to-blue-500/20`}>
+                <img
+                  src={item.image}
+                  alt={item.title}
+                  loading="lazy"
+                  className="absolute inset-0 h-full w-full object-cover transition duration-700 ease-out group-hover:scale-110 group-hover:rotate-1"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 transition-opacity duration-500 group-hover:opacity-95" />
+                <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/55 to-transparent" />
+                <div className="relative z-10 flex h-full flex-col justify-between p-6">
+                  <p className="uppercase tracking-[0.3em] text-[10px] text-zinc-200/80">Archive {String(index + 1).padStart(2, '0')}</p>
+                  <div>
+                    <p className="mb-3 text-xs uppercase tracking-[0.24em] text-violet-100/80">{item.category}</p>
+                    <h3 className="display-type text-2xl font-black leading-none text-white drop-shadow-2xl">{item.title}</h3>
+                  </div>
+                </div>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </div>
+
+      {active && (
+        <div className="fixed inset-0 z-[95] flex items-center justify-center p-6" role="dialog" aria-modal="true" aria-label={active.title}>
+          <div className="absolute inset-0 bg-black/90 backdrop-blur-md" onClick={closeLightbox} />
+
+          <button
+            onClick={() => setActiveIndex((i) => (i - 1 + archiveItems.length) % archiveItems.length)}
+            aria-label="Previous image"
+            className="hidden md:flex absolute left-6 top-1/2 -translate-y-1/2 h-11 w-11 items-center justify-center rounded-full border border-white/15 text-zinc-300 hover:bg-white/10 hover:text-white"
+          >‹</button>
+
+          <div className="relative max-w-4xl w-full">
+            <img src={active.image} alt={active.title} className="w-full max-h-[80vh] object-contain rounded-2xl border border-white/10" />
+            <div className="mt-4 flex items-center justify-between">
+              <div>
+                <p className="uppercase tracking-[0.28em] text-[10px] text-zinc-400">{active.category}</p>
+                <h3 className="display-type text-2xl font-black">{active.title}</h3>
+              </div>
+              <button onClick={closeLightbox} className="rounded-full border border-white/15 px-4 py-2 text-sm text-zinc-300 hover:bg-white/10">
+                Close (Esc)
+              </button>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setActiveIndex((i) => (i + 1) % archiveItems.length)}
+            aria-label="Next image"
+            className="hidden md:flex absolute right-6 top-1/2 -translate-y-1/2 h-11 w-11 items-center justify-center rounded-full border border-white/15 text-zinc-300 hover:bg-white/10 hover:text-white"
+          >›</button>
+        </div>
+      )}
+    </section>
+  );
+}
+
+/* Case-study outline modal. Every field is either real (a string you've written) or null.
+   Null fields render as a dashed placeholder that says exactly what's missing — never
+   invented text standing in for research, metrics, or results that don't exist yet. */
+function CaseStudyModal({ project, onClose }) {
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  if (!project) return null;
+
+  return (
+    <div className="fixed inset-0 z-[95] flex items-start justify-center p-4 md:p-8 overflow-y-auto" role="dialog" aria-modal="true" aria-label={`${project.title} case study outline`}>
+      <div className="absolute inset-0 bg-black/90 backdrop-blur-md" onClick={onClose} />
+      <div className="relative w-full max-w-3xl rounded-[2rem] border border-white/10 bg-[#0f0f10] my-8">
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-white/10 bg-[#0f0f10]/95 backdrop-blur-xl px-6 md:px-10 py-6 rounded-t-[2rem]">
+          <div>
+            <p className="uppercase tracking-[0.3em] text-[10px] text-zinc-400 mb-1">Case Study Outline</p>
+            <h3 className="display-type text-2xl md:text-3xl font-black">{project.title}</h3>
+          </div>
+          <button onClick={onClose} className="shrink-0 rounded-full border border-white/15 px-4 py-2 text-sm text-zinc-300 hover:bg-white/10" autoFocus>
+            Close (Esc)
+          </button>
+        </div>
+
+        <div className="px-6 md:px-10 py-8 grid gap-6">
+          <p className="text-xs text-zinc-400 leading-relaxed border border-dashed border-white/15 rounded-xl p-4">
+            This outline is structural only. Fields below are empty until real project detail is added —
+            nothing on this screen is invented.
+          </p>
+          {caseStudyFields.map((field) => (
+            <div key={field.key} className="border-b border-white/5 pb-6 last:border-0">
+              <p className="uppercase tracking-[0.25em] text-[10px] text-zinc-400 mb-2">{field.label}</p>
+              {project.caseStudy[field.key] ? (
+                <p className="text-zinc-200 leading-relaxed">{project.caseStudy[field.key]}</p>
+              ) : (
+                <p className="text-zinc-500 text-sm italic border border-dashed border-white/10 rounded-lg px-4 py-3">
+                  Needs real {field.label.toLowerCase()} from Siddhi — not yet added.
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<SiddhiDesaiPortfolioV3 />);
+</script>
+</body>
+</html>
